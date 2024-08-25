@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 public class KafkaConsumer {
     
     // @RetryableTopic(attempts = "2" )// 1 retries
-    @KafkaListener(topics = "message", groupId = "consumer", concurrency = "1")
+    @KafkaListener(topics = "message", groupId = "consumer2", concurrency = "1")
     public void consumeMessage(PersonDto message) throws Exception {
         System.out.println("Received message: " + message.getName());
         // if( message.equals("error2") ) throw new Exception("Error processing message");
@@ -20,14 +20,14 @@ public class KafkaConsumer {
 
     @RetryableTopic(attempts = "3",
                     backoff = @Backoff(delay = 1000, multiplier = 2.0),
-                    retryTopicSuffix = "-consumer-retry"
+                    retryTopicSuffix = "-consumer2-retry"
                 ) // Use @Backoff as the value for backoff attribute
-    @KafkaListener(topics = "email", groupId = "consumer", concurrency = "1")
-    public void consumeMessage(EmailDto message) throws Exception{
+    @KafkaListener(topics = "email", groupId = "consumer2", concurrency = "1")
+    public void consumeMessage(EmailDto message) throws Exception {
         System.out.println("Received message: " + message.getTo());
-        
+
         if( message.getTo().equals("error") ) throw new Exception("Error processing message");
-        if( message.getTo().equals("error1") ) throw new Exception("Error processing message");
+        if( message.getTo().equals("error2") ) throw new Exception("Error processing message");
         
     }
 }
