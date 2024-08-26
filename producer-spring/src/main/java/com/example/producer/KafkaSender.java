@@ -8,26 +8,27 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
-public class PersonProducerService {
+@Component
+public class KafkaSender {
 
     @Autowired
-    private KafkaTemplate<String, PersonDto> kafkaTemplate;
+    private KafkaTemplate<String, Object> kafkaTemplate;
 
-    // kafka producer to topic message
-    public void produce(PersonDto data) {
-        Message<PersonDto> message = MessageBuilder.withPayload(data)
-                .setHeader(KafkaHeaders.TOPIC, "message")
+    public void send(String topic, Object payload) {
+         Message<Object> message = MessageBuilder.withPayload(payload)
+                .setHeader(KafkaHeaders.TOPIC, topic)
                 .build();
-        CompletableFuture< SendResult<String,PersonDto> > completableFuture = kafkaTemplate.send(message);
+        CompletableFuture< SendResult<String,Object> > completableFuture = kafkaTemplate.send(message);
         completableFuture.whenComplete((result, ex) -> {
             if (ex != null) {
                 System.out.println("Unable to send message: " + ex.getMessage());
             } else {
-                System.out.println("Sent message: " + data.getName());
+                System.out.println("Sent message: " + payload.toString());
             }
         });
     }
+
+    
 }
