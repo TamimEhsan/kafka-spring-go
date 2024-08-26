@@ -1,11 +1,10 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
-	"strings"
+	"time"
 
 	kafka "github.com/segmentio/kafka-go"
 )
@@ -15,41 +14,29 @@ type EmailDto struct {
 	Subject string `json:"subject"`
 }
 
-func getKafkaReader(kafkaURL, topic, groupID string) *kafka.Reader {
-	brokers := strings.Split(kafkaURL, ",")
-	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers:  brokers,
-		GroupID:  groupID,
-		Topic:    topic,
-		MinBytes: 10e3, // 10KB
-		MaxBytes: 10e6, // 10MB
-	})
+func main() {
+	fmt.Println("Starting consumer...")
+	// get kafka reader using environment variables.
+
+	NonBlockingRetryableTopic(processMessage, "email", 3, 1*time.Second, 2, "-consumer-go", 1)
+
+	select {}
+
 }
 
-func main() {
-	// get kafka reader using environment variables.
-	kafkaURL := "localhost:29092"
-	topic := "email"
-	groupID := "consumer-go"
-
-	reader := getKafkaReader(kafkaURL, topic, groupID)
-
-	defer reader.Close()
-
-	fmt.Println("start consuming ... !!")
-	for {
-		message, err := reader.ReadMessage(context.Background())
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		var email EmailDto
-		err = json.Unmarshal(message.Value, &email)
-		if err != nil {
-			log.Fatalln(err)
-			continue
-		}
-
-		fmt.Printf("Received message: Key=%s To=%s Subject=%s\n", string(message.Key), email.To, email.Subject)
+// Example consumer function
+func processMessage(message kafka.Message) error {
+	// unmarshal the message value to EmailDto
+	var email EmailDto = EmailDto{}
+	err := json.Unmarshal(message.Value, &email)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal message value: %v", err)
 	}
+	// Simulate processing logic
+	if string(email.To) == "error" {
+		return fmt.Errorf("simulated processing error for message: %s", string(message.Value))
+	}
+
+	log.Printf("Processing message: Key=%s, Value=%s", string(message.Key), string(message.Value))
+	return nil
 }
